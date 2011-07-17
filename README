@@ -1,0 +1,25 @@
+# tzmap.js - Library for working with the geography of timezones in JavaScript
+
+# Written in 2011 by L. David Baron <dbaron@dbaron.org>
+
+# To the extent possible under law, the author(s) have dedicated all
+# copyright and related and neighboring rights to this software to the
+# public domain worldwide.  This software is distributed without any
+# warranty.
+#
+# You should have received a copy of the CC0 Public Domain Dedication
+# along with this software.  If not, see
+# <http://creativecommons.org/publicdomain/zero/1.0/>.
+
+This is tzmap.js, a library for working with the geography of time zones
+from JavaScript.
+
+This is a companion library to tz.js, providing the geography-related
+features.  It is intended to support applications that want to map
+locations (latitude/longitude pairs) to time zone names and applications
+that want to draw maps of time zones.
+
+It incorporates data from http://efele.net/maps/tz/ , "A set of
+shapefiles for the TZ timezones", available under CC0.
+
+Files currently in the distribution are:
