@@ -1,0 +1,10 @@
+This is a copy of the Python Shapefile Library, version 1.0 (python 2
+version).
+
+It was imported from the subversion repository at
+http://pyshp.googlecode.com/svn/tags/Release-1.0/Python2 , revision 25.
+
+As described in http://code.google.com/p/pyshp/ it is released under the
+MIT license.
+
+For more information, see http://code.google.com/p/pyshp/ .
