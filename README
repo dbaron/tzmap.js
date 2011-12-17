@@ -32,3 +32,25 @@ Files currently in the distribution are:
 
     Code to construct the JSON data needed by tzmap.js from the
     tzmap shapefiles.
+
+The library has the goal of providing these basic functions:
+
+ (1) Map a (lat,lon) pair to zero or one timezones.
+
+ (2) Get the shape outlines for a given timezone to draw the boundaries
+     of a TZ database timezone.
+
+ (3) Merge the shape outlines for adjacent timezones in order to draw
+     the boundaries of a set of adjacent timezones (eliminating edges
+     that were between two merged zones).  This allows drawing maps
+     showing the timezone lines at a given point in time.
+
+This has the following implications for data structures:
+
+  For (1), we want a quick test that allows rapidly eliminating most
+  timezones; this is done by storing the N/E/S/W edges of the smallest
+  rectangle enclosing all of the zone's polygons.
+
+  For (3), we want each polygon for the zone to be stored as a list of
+  (segment, direction-on-segment) pairs, and each segment to know which
+  one or two zones it separates.
