@@ -23,3 +23,7 @@ It incorporates data from http://efele.net/maps/tz/ , "A set of
 shapefiles for the TZ timezones", available under CC0.
 
 Files currently in the distribution are:
+
+  pyshp/
+
+    The Python Shapefile Library (under its own license).
