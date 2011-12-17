@@ -39,6 +39,13 @@ zf.close()
 
 sf = shapefile.Reader(os.path.join(tmpdir, "world", "tz_world_mp"))
 
-
+for shapeRec in sf.shapeRecords():
+    tzid = shapeRec.record[0]
+    shape = shapeRec.shape
+    if shape.shapeType != 5:
+        raise StandardError("unexpected shape type")
+    # shape.points contains a list of 2-item (x,y) lists
+    # shape.parts contains a set of indices into points, giving the
+    #   start of each part.
 
 shutil.rmtree(tmpdir)
