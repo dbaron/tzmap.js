@@ -39,6 +39,10 @@ zf.close()
 
 sf = shapefile.Reader(os.path.join(tmpdir, "world", "tz_world_mp"))
 
+# A map from zone id to a list of regions, where each region is a list
+# of points, and each point is a list of [lat, lon].
+zoneRegions = {}
+
 for shapeRec in sf.shapeRecords():
     tzid = shapeRec.record[0]
     shape = shapeRec.shape
@@ -47,5 +51,22 @@ for shapeRec in sf.shapeRecords():
     # shape.points contains a list of 2-item (x,y) lists
     # shape.parts contains a set of indices into points, giving the
     #   start of each part.
+    # Start by turning these into a minimally-nicer data structure: a
+    # list of regions, each of which is a list of points (see
+    # zoneRegions).
+    nregions = len(shape.parts)
+    def build_region(idx):
+        min = shape.parts[idx]
+        if idx + 1 == nregions:
+            max = len(shape.points)
+        else:
+            max = shape.parts[idx + 1]
+        return shape.points[min:max]
+    regions = [build_region(idx) for idx in range(0,nregions)]
+    zoneRegions[tzid] = regions
+
+# TODO: build segments
+
+# TODO: output
 
 shutil.rmtree(tmpdir)
