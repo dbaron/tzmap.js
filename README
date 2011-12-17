@@ -27,3 +27,8 @@ Files currently in the distribution are:
   pyshp/
 
     The Python Shapefile Library (under its own license).
+
+  shapefile-to-json.py
+
+    Code to construct the JSON data needed by tzmap.js from the
+    tzmap shapefiles.
