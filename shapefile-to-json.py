@@ -124,7 +124,7 @@ for (tz, regions) in zoneRegions.iteritems():
         region = regions[regionidx]
         lls = [LonLat(pt[0], pt[1]) for pt in region["points"]]
         assert lls[0] == lls[len(lls)-1]
-        for segidx in range(len(lls)-1):
+        def seg_for(segidx):
             a = lls[segidx]
             b = lls[segidx+1]
             (seg, segdata, is_reversed) = find_segment(a, b)
@@ -135,7 +135,7 @@ for (tz, regions) in zoneRegions.iteritems():
             else:
                 assert segdata.fwdRef is None
                 segdata.fwdRef = ref
-        # FIXME: store the segment data
+        region["segs"] = [seg_for(segidx) for segidx in range(len(lls)-1)]
 
 # TODO: output
 
