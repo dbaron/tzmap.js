@@ -43,7 +43,9 @@ The library has the goal of providing these basic functions:
  (3) Merge the shape outlines for adjacent timezones in order to draw
      the boundaries of a set of adjacent timezones (eliminating edges
      that were between two merged zones).  This allows drawing maps
-     showing the timezone lines at a given point in time.
+     showing the timezone lines at a given point in time, or maps
+     showing the regions that have a summer time change within a
+     specific period (perhaps coded by the day they change).
 
 This has the following implications for data structures:
 
