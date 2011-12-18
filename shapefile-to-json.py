@@ -191,11 +191,11 @@ for (tz, regions) in zoneRegions.iteritems():
                     currentChainID = len(chains)
                     currentChainData = []
                     chains.append(currentChainData)
-                    regionChains.append(currentChainID)
+                    regionChains.append([currentChainID, False])
             else:
                 if currentChainID != segdata.chain:
                     currentChainID = segdata.chain
-                    regionChains.append(currentChainID)
+                    regionChains.append([currentChainID, True])
                     currentChainData = None
 
 json_data = {
