@@ -18,6 +18,7 @@ import sys
 import zipfile
 import tempfile
 import shutil
+import json
 
 BASEDIR = os.path.dirname(os.path.realpath(__file__))
 SHAPEFILE_ZIP = os.path.join(os.path.dirname(BASEDIR),
@@ -61,7 +62,10 @@ for shapeRec in sf.shapeRecords():
         else:
             max = shape.parts[idx + 1]
         return shape.points[min:max]
-    zoneRegions[tzid] = [ { "points": build_points(idx) } for idx in range(0, nregions)]
+    zoneRegions[tzid] = [ { "points": build_points(idx) } for idx in range(nregions)]
+
+sf = None
+shutil.rmtree(tmpdir)
 
 # We want to uniquely identify segments, but let them run either
 # direction.  So given a segment that runs between [lona, lata] and
@@ -105,6 +109,7 @@ class SegmentData:
     def __init__(self):
         self.fwdRef = None
         self.revRef = None
+        self.chain = None
 
 segments = {}
 
@@ -119,6 +124,9 @@ def find_segment(a, b):
     data = segments.setdefault(seg, SegmentData())
     return (seg, data, is_reversed)
 
+# Build up the segment data, which tells us for each line segment that
+# is part of a zone boundary, which zone or pair of zones uses that
+# segment as part of its boundary.
 for (tz, regions) in zoneRegions.iteritems():
     for regionidx in range(len(regions)):
         region = regions[regionidx]
@@ -135,8 +143,65 @@ for (tz, regions) in zoneRegions.iteritems():
             else:
                 assert segdata.fwdRef is None
                 segdata.fwdRef = ref
+            return (seg, segdata, is_reversed)
         region["segs"] = [seg_for(segidx) for segidx in range(len(lls)-1)]
 
-# TODO: output
+# Build up as-maximal-as-is-easy (i.e., we still break at the start/end
+# of the original points list for the region) chains of line segments
+# that separate the same pair of time zones.  (I'd have called them
+# sequences, but then I'd have to distinguish "seg" and "seq".)
+chains = []
+def refs_in_sequence(refa, refb):
+    if refa is None or refb is None:
+        return refa is None and refb is None
+    return refa.tz == refb.tz and \
+           refa.regionidx == refb.regionidx and \
+           abs(refa.segidx - refb.segidx) == 1
+def segments_in_sequence(segdataa, segdatab):
+    if refs_in_sequence(segdataa.fwdRef, segdatab.fwdRef) and \
+       refs_in_sequence(segdataa.revRef, segdatab.revRef):
+         return (True, False) # (in_sequence, flip)
+    if refs_in_sequence(segdataa.fwdRef, segdatab.revRef) and \
+       refs_in_sequence(segdataa.revRef, segdatab.fwdRef):
+         return (True, True) # (in_sequence, flip)
+    return (False, False)
+for (tz, regions) in zoneRegions.iteritems():
+    for regionidx in range(len(regions)):
+        region = regions[regionidx]
+        segs = region["segs"]
+        region["chains"] = regionChains = []
+        currentChainID = None
+        currentChainData = None
+        for segidx in range(len(segs)):
+            (seg, segdata, is_reversed) = segs[segidx]
+            if segdata.chain is None:
+                # We're responsible for writing this segment
+                continueChain = False
+                if segidx != 0:
+                    (prevseg, prevsegdata, prev_is_reversed) = segs[segidx-1]
+                    if segments_in_sequence(prevsegdata, segdata) and \
+                       (segdata.chain is None) == (currentChainData is not None):
+                        continueChain = True
+                if continueChain:
+                    if is_reversed:
+                        currentChainData.append(seg.a)
+                    else:
+                        currentChainData.append(seg.b)
+                else:
+                    currentChainID = len(chains)
+                    currentChainData = []
+                    chains.append(currentChainData)
+                    regionChains.append(currentChainID)
+            else:
+                if currentChainID != segdata.chain:
+                    currentChainID = segdata.chain
+                    regionChains.append(currentChainID)
+                    currentChainData = None
 
-shutil.rmtree(tmpdir)
+json_data = {
+              "chains": [[[point.lon, point.lat] for point in chain] for chain in chains],
+              "zones": { tz: [region["chains"] for region in regions]
+                         for (tz, regions) in zoneRegions.iteritems() }
+            }
+
+print json.dumps(json_data, sort_keys=True)
