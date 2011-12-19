@@ -13,9 +13,26 @@
  * <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 (function() {
+    "use strict";
 
+    var public_loadData = function(success_callback, error_callback) {
+        // FIXME: write me
+    }
 
     // Exports:
     window.tzmap = {
+        /**
+         * loadData(success_callback, error_callback)
+         *
+         * This library has to load a significant amount of timezone
+         * boundary data in order to work.  This function triggers the
+         * loading of the data.  When the loading completes
+         * successfully, success_callback is called; if it fails,
+         * error_callback is called.
+         *
+         * Other methods of this library can be used only after
+         * success_callback has been called.
+         */
+        loadData: public_loadData,
     };
 })();
