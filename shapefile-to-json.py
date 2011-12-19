@@ -160,11 +160,11 @@ def refs_in_sequence(refa, refb):
 def segments_in_sequence(segdataa, segdatab):
     if refs_in_sequence(segdataa.fwdRef, segdatab.fwdRef) and \
        refs_in_sequence(segdataa.revRef, segdatab.revRef):
-         return (True, False) # (in_sequence, flip)
+         return True
     if refs_in_sequence(segdataa.fwdRef, segdatab.revRef) and \
        refs_in_sequence(segdataa.revRef, segdatab.fwdRef):
-         return (True, True) # (in_sequence, flip)
-    return (False, False)
+         return True
+    return False
 for (tz, regions) in zoneRegions.iteritems():
     for regionidx in range(len(regions)):
         region = regions[regionidx]
