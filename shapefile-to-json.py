@@ -189,7 +189,10 @@ for (tz, polygons) in zonePolygons.iteritems():
                         currentChainData.append(seg.b)
                 else:
                     currentChainID = len(chains)
-                    currentChainData = []
+                    if is_reversed:
+                        currentChainData = [ seg.b, seg.a ]
+                    else:
+                        currentChainData = [ seg.a, seg.b ]
                     chains.append(currentChainData)
                     polygonChains.append([currentChainID, False])
                 segdata.chain = currentChainID
