@@ -37,13 +37,16 @@
             return;
         }
 
+        var isHTTP = window.location.protocol == "http:" ||
+                     window.location.protocol == "https:";
+
         function rsc() {
             if (gXHR.readyState != 4) {
                 return;
             }
 
             var success = false;
-            if (0 == gXHR.status || (200 <= gXHR.status && gXHR.status < 300)) {
+            if (!isHTTP || (200 <= gXHR.status && gXHR.status < 300)) {
                 var json = null;
                 try {
                     json = JSON.parse(gXHR.responseText);
@@ -69,7 +72,7 @@
 
         gXHR = new XMLHttpRequest();
         gXHR.onreadystatechange = rsc;
-        gXHR.open("GET", "world-map.json.gz");
+        gXHR.open("GET", isHTTP ? "world-map.json.gz" : "world-map.json");
         gXHR.send();
     }
 
