@@ -73,6 +73,7 @@
         gXHR = new XMLHttpRequest();
         gXHR.onreadystatechange = rsc;
         gXHR.open("GET", isHTTP ? "world-map.json.gz" : "world-map.json");
+        gXHR.responseType = "text"; // maybe use "json" in the future
         gXHR.send();
     }
 
