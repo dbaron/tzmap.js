@@ -138,18 +138,16 @@
                                 var tmp = ptalon;
                                 ptalon = prevalon;
                                 prevalon = tmp;
-                            } else {
                             }
 
-                            // Check the endpoint at the west end
-                            // but not the east end.  This does the
-                            // right thing for the intersects count,
-                            // since we need to worry about both
-                            // what happens when the segments turn
-                            // back the opposite east/west or
-                            // continue the same east/west from the
-                            // boundary.  FIXME: But it's not quite
-                            // right for the on-the-line check.
+                            // Check the endpoint at the west end but
+                            // not the east end.  This does the right
+                            // thing for the intersects count, since we
+                            // need to worry about both what happens
+                            // when the segments turn back the opposite
+                            // east/west or continue the same east/west
+                            // from the boundary.  FIXME: But it's not
+                            // quite right for the on-the-line check.
                             if (prevalon <= alon && alon < ptalon) {
                                 var xlat = prevlat + (ptlat - prevlat) * ((alon - prevalon) / (ptalon - prevalon));
                                 if (xlat == lat)
