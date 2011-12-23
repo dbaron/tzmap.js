@@ -11,7 +11,7 @@
 # along with this software.  If not, see
 # <http://creativecommons.org/publicdomain/zero/1.0/>.
 
-all: output/world-map.json output/world-map.json.gz output/tzmap.js
+all: output/world-map.json output/world-map.json.gz output/tzmap.js output/test-tzmap.html
 
 output/world-map.json: shapefile-to-json.py ../tzmap/tz_world_mp.zip
 	mkdir -p output
@@ -22,4 +22,7 @@ output/world-map.json: shapefile-to-json.py ../tzmap/tz_world_mp.zip
 	touch -r $< $@
 
 output/tzmap.js: tzmap.js
+	cp -p $< $@
+
+output/test-tzmap.html: test-tzmap.html
 	cp -p $< $@

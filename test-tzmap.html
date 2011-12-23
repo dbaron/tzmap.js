@@ -1,0 +1,24 @@
+<!DOCTYPE HTML>
+<script src="tzmap.js"></script>
+<script>
+var gOutput;
+
+function output_line(text) {
+    gOutput.appendChild(document.createTextNode(text + "\n"));
+}
+
+window.addEventListener("load", run);
+
+function run() {
+    gOutput = document.getElementById("output");
+
+}
+function if_success() {
+    output_line("success loading JSON");
+}
+function if_failure() {
+    output_line("failure loading JSON");
+}
+window.tzmap.loadData(if_success, if_failure);
+</script>
+<pre id="output"></pre>

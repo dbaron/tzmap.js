@@ -15,8 +15,62 @@
 (function() {
     "use strict";
 
+    var gXHR = null;
+    var gLoadSuccessCallbacks = [];
+    var gLoadErrorCallbacks = [];
+    var gJSON = null;
+
     var public_loadData = function(success_callback, error_callback) {
-        // FIXME: write me
+        if (gJSON) {
+            if (success_callback) {
+                setTimeout(success_callback, 0);
+            }
+            return;
+        }
+        if (success_callback) {
+            gLoadSuccessCallbacks.push(success_callback);
+        }
+        if (error_callback) {
+            gLoadErrorCallbacks.push(error_callback);
+        }
+        if (gXHR) {
+            return;
+        }
+
+        function rsc() {
+            if (gXHR.readyState != 4) {
+                return;
+            }
+
+            var success = false;
+            if (0 == gXHR.status || (200 <= gXHR.status && gXHR.status < 300)) {
+                var json = null;
+                try {
+                    json = JSON.parse(gXHR.responseText);
+                } catch (ex) {
+                }
+                if (json && json.chains && json.zones) {
+                    success = true;
+                    gJSON = json;
+                }
+            }
+
+            var callbacks = success ? gLoadSuccessCallbacks
+                                    : gLoadErrorCallbacks;
+
+            gLoadSuccessCallbacks = [];
+            gLoadErrorCallbacks = [];
+            gXHR = null;
+
+            for (var idx in callbacks) {
+                callbacks[idx]();
+            }
+        }
+
+        gXHR = new XMLHttpRequest();
+        gXHR.onreadystatechange = rsc;
+        gXHR.open("GET", "world-map.json.gz");
+        gXHR.send();
     }
 
     // Exports:
