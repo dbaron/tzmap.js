@@ -92,8 +92,8 @@
         var chains = gJSON.chains;
 
         var zone = zones[tzid];
-        for (var regionIdx in zone) {
-            var region = zone[regionIdx];
+        for (var polygonIdx in zone) {
+            var polygon = zone[polygonIdx];
 
             // Since we don't need to worry about zones containing the
             // north pole (FIXME: really?), we can just count the number
@@ -103,8 +103,8 @@
             // need to worry about whether they're great circle lines or
             // lines on an easier projection.
             var intersects = 0;
-            for (var chainIdx in region) {
-                var chainobj = region[chainIdx];
+            for (var chainIdx in polygon) {
+                var chainobj = polygon[chainIdx];
                 var chainID = chainobj[0];
                 var chainInv = chainobj[1];
                 var chain = chains[chainID];
