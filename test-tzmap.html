@@ -46,9 +46,17 @@ function test_zone_at(lat, lon, n) {
     is(window.tzmap.zoneAt(lat, lon), n, "zone at " + lat + "," + lon);
 }
 
+function test_zone_contains(lat, lon, n, expected) {
+    is(window.tzmap.zoneContains(n, lat, lon), expected, "zone " + n + " contains " + lat + "," + lon);
+}
+
 function do_tests() {
     test_zone_at(-30, 20, "Africa/Johannesburg");
+    test_zone_contains(-30, 20, "Africa/Gaborone", false);
     test_zone_at(40, -75, "America/New_York");
+    test_zone_contains(40, -75, "America/Iqaluit", false);
+    test_zone_contains(40, -75, "America/Nassau", false);
+    test_zone_contains(-10, -75, "America/Nassau", false);
     test_zone_at(37.5, -122, "America/Los_Angeles");
     test_zone_at(49, 4, "Europe/Paris");
     print("Totals:  " + pass_count + " passed, " + fail_count + " failed.");
