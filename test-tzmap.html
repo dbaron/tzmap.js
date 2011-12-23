@@ -59,6 +59,8 @@ function do_tests() {
     test_zone_contains(-10, -75, "America/Nassau", false);
     test_zone_at(37.5, -122, "America/Los_Angeles");
     test_zone_at(49, 4, "Europe/Paris");
+    test_zone_at(40, -65, null);
+    test_zone_at(-89, 100, "uninhabited");
     print("Totals:  " + pass_count + " passed, " + fail_count + " failed.");
 }
 

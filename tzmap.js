@@ -213,6 +213,7 @@
          * Return whether the time zone name (e.g.,
          * "America/Los_Angeles") contains the point at the given
          * latitude and longitude or has that point on its boundary.
+         * Supports the "uninhabited" zone, but not null.
          */
         zoneContains: public_zoneContains,
 
@@ -220,10 +221,11 @@
          * zoneAt(lat, lon)
          *
          * Return the time zone name (e.g., "America/Los_Angeles") at
-         * the given latitude and longitude, or null if no time zone is
-         * found at that location.  If the location is exactly on a time
-         * zone boundary, which time zone will be returned is undefined,
-         * but one of them will be.
+         * the given latitude and longitude, "uninhabited" for land
+         * areas for which no time zone is known for the location (e.g.,
+         * Antarctica), or null for water areas.  If the location is
+         * exactly on a time zone boundary, which time zone will be
+         * returned is undefined, but one of them will be.
          */
         zoneAt: public_zoneAt,
     };
