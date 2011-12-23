@@ -3,22 +3,55 @@
 <script>
 var gOutput;
 
-function output_line(text) {
-    gOutput.appendChild(document.createTextNode(text + "\n"));
+function print(s)
+{
+    gOutput.appendData(s + "\n");
+}
+
+var pass_count = 0, fail_count = 0;
+
+function assert(cond, description)
+{
+    if (cond) {
+        ++pass_count;
+    } else {
+        ++fail_count;
+        print("FAIL: " + description);
+    }
+}
+
+function is(value, expected, description)
+{
+    assert(value == expected,
+           description + ":  " + value + " should equal " + expected);
 }
 
 window.addEventListener("load", run);
 
 function run() {
-    gOutput = document.getElementById("output");
+    gOutput = document.createTextNode("");
+    document.getElementById("output").appendChild(gOutput);
 
+    window.tzmap.loadData(if_success, if_failure);
 }
 function if_success() {
-    output_line("success loading JSON");
+    print("success loading JSON");
+    do_tests();
 }
 function if_failure() {
-    output_line("failure loading JSON");
+    print("failure loading JSON");
 }
-window.tzmap.loadData(if_success, if_failure);
+
+function test_zone_at(lat, lon, n) {
+    is(window.tzmap.zoneAt(lat, lon), n, "zone at " + lat + "," + lon);
+}
+
+function do_tests() {
+    test_zone_at(-30, 20, "Africa/Johannesburg");
+    test_zone_at(40, -75, "America/New_York");
+    test_zone_at(37.5, -122, "America/Los_Angeles");
+    test_zone_at(49, 4, "Europe/Paris");
+}
+
 </script>
 <pre id="output"></pre>

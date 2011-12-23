@@ -76,6 +76,104 @@
         gXHR.send();
     }
 
+    /**
+     * Check if needle is in [rangea, rangeb] or [rangeb, rangea].
+     */
+    function in_range(needle, rangea, rangeb) {
+        if (rangea < rangeb) {
+            return rangea <= needle && needle <= rangeb;
+        } else {
+            return rangeb <= needle && needle <= rangea;
+        }
+    }
+
+    var public_zoneAt = function(lat, lon) {
+        var zones = gJSON.zones;
+        var chains = gJSON.chains;
+
+        if (lat >= 90 || lat <= -90)
+            return null;
+        lon = ((lon % 360) + 180) % 360 - 180;
+
+        for (var tzid in zones) {
+            var zone = zones[tzid];
+            for (var regionIdx in zone) {
+                var region = zone[regionIdx];
+
+                // Since we don't need to worry about zones containing
+                // the north pole (FIXME: really?), we can just count
+                // the number of times that a north-south line from the
+                // north pole to our point intersects the zone.
+                // Furthermore, the segments are short enough that we
+                // don't need to worry about whether they're great
+                // circle lines or lines on an easier projection.
+                var intersects = 0;
+                for (var chainIdx in region) {
+                    var chainobj = region[chainIdx];
+                    var chainID = chainobj[0];
+                    var chainInv = chainobj[1];
+                    var chain = chains[chainID];
+                    var prevlon, prevlat;
+                    for (var pointIdx in chain) {
+                        var pointobj = chain[pointIdx];
+                        var ptlon = pointobj[0];
+                        var ptlat = pointobj[1];
+                        if (pointIdx > 0) {
+                            if (ptlon == prevlon) {
+                                // vertical line.  All we need to do is
+                                // check if our point is *on* it.
+                                if (ptlon == lon
+                                    && in_range(lat, ptlat, prevlat))
+                                    return tzid;
+                            } else {
+                                var alon, ptalon, prevalon;
+                                if (Math.abs(ptlon - prevlon) > 180) {
+                                    // this segment crosses the date line,
+                                    // so use adjusted numbers instead
+                                    alon = (lon + 180) % 360;
+                                    ptalon = (ptlon + 180) % 360;
+                                    prevalon = (prevlon + 180) % 360;
+                                } else {
+                                    alon = lon;
+                                    ptalon = ptlon;
+                                    prevalon = prevlon;
+                                }
+
+                                var segInv;
+                                if (ptalon < prevalon) {
+                                    var tmp = ptalon;
+                                    ptalon = prevalon;
+                                    prevalon = tmp;
+                                    segInv = !chainInv;
+                                } else {
+                                    segInv = chainInv;
+                                }
+
+                                if ((prevalon < alon && alon < ptalon)
+                                    || (segInv ? (ptalon == alon)
+                                               : (prevalon == alon))) {
+                                    var xlat = prevlat + (ptlat - prevlat) * ((alon - prevalon) / (ptalon - prevalon));
+                                    if (xlat == lat)
+                                        // on the line
+                                        return tzid;
+                                    if (xlat > lat) {
+                                        ++intersects;
+                                    }
+                                }
+                            }
+                        }
+                        prevlon = ptlon;
+                        prevlat = ptlat;
+                    }
+                }
+                if (intersects % 2 == 1) {
+                    return tzid;
+                }
+            }
+        }
+        return null;
+    }
+
     // Exports:
     window.tzmap = {
         /**
@@ -91,5 +189,16 @@
          * success_callback has been called.
          */
         loadData: public_loadData,
+
+        /**
+         * zoneAt(lat, lon)
+         *
+         * Return the time zone name (e.g., "America/Los_Angeles") at
+         * the given latitude and longitude, or null if no time zone is
+         * found at that location.  If the location is exactly on a time
+         * zone boundary, which time zone will be returned is undefined,
+         * but one of them will be.
+         */
+        zoneAt: public_zoneAt,
     };
 })();
