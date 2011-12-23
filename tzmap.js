@@ -282,12 +282,13 @@
                     var startpt = polygon[polygon.length - 1];
                     startlon = startpt[0];
                     arr = startlons[startlon];
+                    info = null;
                     for (var idx in arr) {
-                        info = arr[idx];
-                        var testpt =
-                            (info.reverse ? lastpt : firstpt)(info.chainID);
+                        var testinfo = arr[idx];
+                        var testpt = (testinfo.reverse ? lastpt : firstpt)(testinfo.chainID);
                         if (testpt[1] == startpt[1]) {
                             arr.splice(idx, 1);
+                            info = testinfo;
                             break;
                         }
                     }
