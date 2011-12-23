@@ -61,6 +61,9 @@ function do_tests() {
     test_zone_at(49, 4, "Europe/Paris");
     test_zone_at(40, -65, null);
     test_zone_at(-89, 100, "uninhabited");
+    window.tzmap.polygonsFor(["America/New_York"]);
+    window.tzmap.polygonsFor(["America/New_York", "America/Indiana/Indianapolis", "America/Kentucky/Louisville", "America/Kentucky/Monticello" ]);
+    window.tzmap.polygonsFor(["America/Iqaluit"]);
     print("Totals:  " + pass_count + " passed, " + fail_count + " failed.");
 }
 

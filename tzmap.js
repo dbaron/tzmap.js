@@ -191,6 +191,122 @@
         return null;
     }
 
+    function firstpt(chainID) {
+        return gJSON.chains[chainID][0];
+    }
+
+    function lastpt(chainID) {
+        var chain = gJSON.chains[chainID];
+        return chain[chain.length - 1];
+    }
+
+    function pts_equal(a, b) {
+        return a[0] == b[0] && a[1] == b[1];
+    }
+
+    var public_polygonsFor = function(zone_array) {
+        // A set of chain IDs, except there is a useful value on the
+        // value side of the hash:  whether the chain is used forwards
+        // (false) or in reverse (true).
+        var chains = {};
+
+        for (var zoneIdx in zone_array) {
+            var tzid = zone_array[zoneIdx];
+            var zone = gJSON.zones[tzid];
+            for (var polygonIdx in zone) {
+                var polygon = zone[polygonIdx];
+                for (var chainIdx in polygon) {
+                    var chainobj = polygon[chainIdx];
+                    var chainID = chainobj[0];
+                    var reverse = chainobj[1];
+                    if (chainID in chains) {
+                        // It's a shared boundary
+                        delete chains[chainID];
+                    } else {
+                        chains[chainID] = reverse;
+                    }
+                }
+            }
+        }
+
+        var result = [];
+
+        // Append the polygons that are in one chain, and put the rest
+        // of the chains in a hash by their starting longitude.
+        var startlons = {};
+        for (var chainID in chains) {
+            if (pts_equal(firstpt(chainID), lastpt(chainID))) {
+                // This chain is a complete polygon.
+                var reverse = chains[chainID];
+                var chain = gJSON.chains[chainID];
+                if (chains[chainID]) {
+                    // append in reverse
+                    result.push([].concat(chain).reverse());
+                } else {
+                    // append in forward order (without copy)
+                    result.push(chain);
+                }
+            } else {
+                var reverse = chains[chainID];
+                var info = { chainID: chainID, reverse: reverse };
+                var startlon = (reverse ? lastpt : firstpt)(chainID)[0];
+                if (startlon in startlons) {
+                    startlons[startlon].push(info);
+                } else {
+                    startlons[startlon] = [ info ];
+                }
+            }
+        }
+        chains = null;
+
+        // Deal with the polygons that we hashed by starting longitude.
+        function first_startlon() {
+            for (var startlon in startlons) {
+                return startlon;
+            }
+            return null;
+        }
+        for (;;) {
+            var startlon = first_startlon();
+            if (startlon === null) {
+                break;
+            }
+            var polygon = [];
+            do {
+                var arr, info;
+                if (polygon.length == 0) {
+                    arr = startlons[startlon];
+                    info = arr.pop();
+                } else {
+                    var startpt = polygon[polygon.length - 1];
+                    startlon = startpt[0];
+                    arr = startlons[startlon];
+                    for (var idx in arr) {
+                        info = arr[idx];
+                        var testpt =
+                            (info.reverse ? lastpt : firstpt)(chainID);
+                        if (testpt[1] == startpt[1]) {
+                            arr.splice(idx, 1);
+                            break;
+                        }
+                    }
+                }
+                if (arr.length == 0) {
+                    delete startlons[startlon];
+                }
+                var chain = gJSON.chains[info.chainID];
+                if (info.reverse) {
+                    polygon = polygon.concat([].concat(chain).reverse());
+                } else {
+                    polygon = polygon.concat(chain);
+                }
+                // Note: minimum of 2 iterations
+            } while (!pts_equal(polygon[0], polygon[polygon.length - 1]));
+        }
+
+        return result;
+    }
+
     // Exports:
     window.tzmap = {
         /**
@@ -228,5 +344,16 @@
          * returned is undefined, but one of them will be.
          */
         zoneAt: public_zoneAt,
+
+        /**
+         * polygonsFor(zone_array)
+         *
+         * Get the set of polygons for a set of timezones.  Each name in
+         * zone_array should be an tz database timezone name.  This API
+         * will return an array of non-adjacent polygons, where each
+         * polygon is an array of points (the first and last being the
+         * same), and each point is an array of [lon, lat] as floats.
+         */
+        polygonsFor: public_polygonsFor,
     };
 })();
