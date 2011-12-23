@@ -285,7 +285,7 @@
                     for (var idx in arr) {
                         info = arr[idx];
                         var testpt =
-                            (info.reverse ? lastpt : firstpt)(chainID);
+                            (info.reverse ? lastpt : firstpt)(info.chainID);
                         if (testpt[1] == startpt[1]) {
                             arr.splice(idx, 1);
                             break;
