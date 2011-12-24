@@ -73,7 +73,7 @@
             if (!isHTTP || (200 <= gXHR.status && gXHR.status < 300)) {
                 var json = null;
                 try {
-                    if ("responseType" in gXHR) {
+                    if ("responseType" in gXHR && gXHR.responseType == "json") {
                         json = gXHR.response;
                     } else {
                         json = JSON.parse(gXHR.responseText);
@@ -94,7 +94,12 @@
             gXHR.onreadystatechange = rsc;
             gXHR.open("GET", path);
             if ("responseType" in gXHR) {
-                gXHR.responseType = "json";
+                try {
+                    gXHR.responseType = "json";
+                } catch(ex) {
+                    // Chrome 16 (nightly) supports "text" but not "json"
+                    gXHR.responseType = "text";
+                }
             }
             gXHR.send();
         } catch(ex) {
