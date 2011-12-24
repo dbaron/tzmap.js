@@ -51,6 +51,19 @@
             path += ".gz";
         }
 
+        function do_notify(success) {
+            var callbacks = success ? gLoadSuccessCallbacks
+                                    : gLoadErrorCallbacks;
+
+            gLoadSuccessCallbacks = [];
+            gLoadErrorCallbacks = [];
+            gXHR = null;
+
+            for (var idx in callbacks) {
+                callbacks[idx]();
+            }
+        }
+
         function rsc() {
             if (gXHR.readyState != 4) {
                 return;
@@ -73,25 +86,20 @@
                 }
             }
 
-            var callbacks = success ? gLoadSuccessCallbacks
-                                    : gLoadErrorCallbacks;
+            do_notify(success);
+        }
 
-            gLoadSuccessCallbacks = [];
-            gLoadErrorCallbacks = [];
-            gXHR = null;
-
-            for (var idx in callbacks) {
-                callbacks[idx]();
+        try {
+            gXHR = new XMLHttpRequest();
+            gXHR.onreadystatechange = rsc;
+            gXHR.open("GET", path);
+            if ("responseType" in gXHR) {
+                gXHR.responseType = "json";
             }
+            gXHR.send();
+        } catch(ex) {
+            do_notify(false);
         }
-
-        gXHR = new XMLHttpRequest();
-        gXHR.onreadystatechange = rsc;
-        gXHR.open("GET", path);
-        if ("responseType" in gXHR) {
-            gXHR.responseType = "json";
-        }
-        gXHR.send();
     }
 
     /**
