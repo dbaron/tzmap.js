@@ -56,3 +56,13 @@ This has the following implications for data structures:
   For (3), we want each polygon for the zone to be stored as a list of
   (segment, direction-on-segment) pairs, and each segment to know which
   one or two zones it separates.
+
+
+Build instructions:
+
+ * Download the tz_world_mp.zip file from
+   http://efele.net/maps/tz/world/ and place it in ../tzmap/
+   (or elsewhere, and adjust the path at the top of
+   shapefile-to-json.py)
+
+ * Run |make| to generate the output in output/
