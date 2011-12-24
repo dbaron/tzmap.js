@@ -315,6 +315,7 @@
                 }
                 // Note: minimum of 2 iterations
             } while (!pts_equal(polygon[0], polygon[polygon.length - 1]));
+            result.push(polygon);
         }
 
         return result;
