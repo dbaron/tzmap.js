@@ -60,7 +60,11 @@
             if (!isHTTP || (200 <= gXHR.status && gXHR.status < 300)) {
                 var json = null;
                 try {
-                    json = JSON.parse(gXHR.responseText);
+                    if ("responseType" in gXHR) {
+                        json = gXHR.response;
+                    } else {
+                        json = JSON.parse(gXHR.responseText);
+                    }
                 } catch (ex) {
                 }
                 if (json && json.chains && json.zones) {
@@ -84,7 +88,9 @@
         gXHR = new XMLHttpRequest();
         gXHR.onreadystatechange = rsc;
         gXHR.open("GET", path);
-        gXHR.responseType = "text"; // maybe use "json" in the future
+        if ("responseType" in gXHR) {
+            gXHR.responseType = "json";
+        }
         gXHR.send();
     }
 
