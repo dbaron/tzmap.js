@@ -20,7 +20,7 @@
     var gLoadErrorCallbacks = [];
     var gJSON = null;
 
-    var public_loadData = function(success_callback, error_callback) {
+    var public_loadData = function(path, success_callback, error_callback) {
         if (gJSON) {
             if (success_callback) {
                 setTimeout(success_callback, 0);
@@ -37,8 +37,19 @@
             return;
         }
 
-        var isHTTP = window.location.protocol == "http:" ||
+        var protocol_match = path.match(/^([^/?#]+):/)
+        var isHTTP;
+        if (protocol_match) {
+            isHTTP = protocol_match[1] == "http" ||
+                     protocol_match[1] == "https";
+        } else {
+            isHTTP = window.location.protocol == "http:" ||
                      window.location.protocol == "https:";
+        }
+        path += "world-map.json";
+        if (isHTTP) {
+            path += ".gz";
+        }
 
         function rsc() {
             if (gXHR.readyState != 4) {
@@ -72,7 +83,7 @@
 
         gXHR = new XMLHttpRequest();
         gXHR.onreadystatechange = rsc;
-        gXHR.open("GET", isHTTP ? "world-map.json.gz" : "world-map.json");
+        gXHR.open("GET", path);
         gXHR.responseType = "text"; // maybe use "json" in the future
         gXHR.send();
     }
@@ -312,11 +323,14 @@
     // Exports:
     window.tzmap = {
         /**
-         * loadData(success_callback, error_callback)
+         * loadData(path, success_callback, error_callback)
          *
          * This library has to load a significant amount of timezone
          * boundary data in order to work.  This function triggers the
-         * loading of the data.  When the loading completes
+         * loading of the data.  The path argument given is the path to
+         * the directory in which the data are located (usually the same
+         * as the script), which must end with a slash, and may be a
+         * path relative to the document.  When the loading completes
          * successfully, success_callback is called; if it fails,
          * error_callback is called.
          *

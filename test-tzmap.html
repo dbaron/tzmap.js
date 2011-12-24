@@ -32,7 +32,7 @@ function run() {
     gOutput = document.createTextNode("");
     document.getElementById("output").appendChild(gOutput);
 
-    window.tzmap.loadData(if_success, if_failure);
+    window.tzmap.loadData("./", if_success, if_failure);
 }
 function if_success() {
     print("success loading JSON");
