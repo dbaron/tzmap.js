@@ -2,6 +2,9 @@
 <title>Test tileFor()</title>
 <meta charset="UTF-8">
 <script src="tzmap.js"></script>
+<style>
+canvas { vertical-align: middle }
+</style>
 <script>
 window.tzmap.loadData("./", run, function() { alert("loading failed") });
 
@@ -16,8 +19,12 @@ function run() {
         lats[i] = 50 - i / 20;
     }
 
+    var startTime = Date.now();
     var canvas = window.tzmap.tileFor(lats, lons, [{color: "red", polygons: polygons}]);
+    var duration = Date.now() - startTime;
     canvas.style.border = "1px solid black";
     document.body.appendChild(canvas);
+    document.body.appendChild(document.createTextNode(" drawn in " + duration + "ms."));
+    document.body.appendChild(document.createElement("br"));
 }
 </script>
