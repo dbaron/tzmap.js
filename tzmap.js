@@ -350,21 +350,21 @@
         for (var polygonsIdx in polygonsArray) {
             var polygonsObj = polygonsArray[polygonsIdx];
             cx.fillStyle = polygonsObj.color;
-            for (var polygonIdx in polygonsObj.polygons) {
-                var pointList = polygonsObj.polygons[polygonIdx];
-                for (var column = 0, column_end = width;
-                     column < column_end; ++column) {
-                    var lon = lons[column];
-                    // pixels is a list of the pixels in the tile whose
-                    // presence in the polygon  is *different* from the
-                    // pixel above.  (The 0th entry represents simply
-                    // whether the top pixel is in the polygon.)
-                    // FIXME: could be typed array
-                    var pixels = new Array(height);
-                    for (var y = 0; y < height; ++y) {
-                        pixels[y] = false;
-                    }
+            for (var column = 0, column_end = width;
+                 column < column_end; ++column) {
+                var lon = lons[column];
+                // pixels is a list of the pixels in the tile whose
+                // presence in the polygon  is *different* from the
+                // pixel above.  (The 0th entry represents simply
+                // whether the top pixel is in the polygon.)
+                // FIXME: could be typed array
+                var pixels = new Array(height);
+                for (var y = 0; y < height; ++y) {
+                    pixels[y] = false;
+                }
 
+                for (var polygonIdx in polygonsObj.polygons) {
+                    var pointList = polygonsObj.polygons[polygonIdx];
                     for (var pt1Idx = 0; pt1Idx < pointList.length; ++pt1Idx) {
                         var pt2Idx = pt1Idx + 1;
                         if (pt2Idx == pointList.length) {
@@ -437,23 +437,23 @@
                         }
                         pixels[min] = !pixels[min];
                     }
+                }
 
-                    // Now actually fill in the pixels.
-                    var drawing = false;
-                    var rectTop = 0;
-                    for (var y = 0; y < height; ++y) {
-                        if (pixels[y]) {
-                            if (drawing) {
-                                cx.fillRect(column, rectTop, 1, y - rectTop);
-                            } else {
-                                rectTop = y;
-                            }
-                            drawing = !drawing;
+                // Now actually fill in the pixels.
+                var drawing = false;
+                var rectTop = 0;
+                for (var y = 0; y < height; ++y) {
+                    if (pixels[y]) {
+                        if (drawing) {
+                            cx.fillRect(column, rectTop, 1, y - rectTop);
+                        } else {
+                            rectTop = y;
                         }
+                        drawing = !drawing;
                     }
-                    if (drawing) {
-                        cx.fillRect(column, rectTop, 1, height - rectTop);
-                    }
+                }
+                if (drawing) {
+                    cx.fillRect(column, rectTop, 1, height - rectTop);
                 }
             }
         }
