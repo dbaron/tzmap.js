@@ -1,0 +1,23 @@
+<!DOCTYPE HTML>
+<title>Test tileFor()</title>
+<meta charset="UTF-8">
+<script src="tzmap.js"></script>
+<script>
+window.tzmap.loadData("./", run, function() { alert("loading failed") });
+
+function run() {
+    var polygons = window.tzmap.polygonsFor(["America/Los_Angeles"]);
+    var lons = [];
+    for (var i = 0; i < 300; ++i) {
+        lons[i] = i / 25 - 125;
+    }
+    var lats = [];
+    for (i = 0; i < 400; ++i) {
+        lats[i] = 50 - i / 20;
+    }
+
+    var canvas = window.tzmap.tileFor(lats, lons, [{color: "red", polygons: polygons}]);
+    canvas.style.border = "1px solid black";
+    document.body.appendChild(canvas);
+}
+</script>

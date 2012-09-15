@@ -340,6 +340,126 @@
         return result;
     }
 
+    var public_tileFor = function(lats, lons, polygonsArray) {
+        var height = lats.length;
+        var width = lons.length;
+        var canvas = document.createElement("canvas");
+        canvas.height = height;
+        canvas.width = width;
+        var cx = canvas.getContext("2d");
+        for (var polygonsIdx in polygonsArray) {
+            var polygonsObj = polygonsArray[polygonsIdx];
+            cx.fillStyle = polygonsObj.color;
+            for (var polygonIdx in polygonsObj.polygons) {
+                var pointList = polygonsObj.polygons[polygonIdx];
+                for (var column = 0, column_end = width;
+                     column < column_end; ++column) {
+                    var lon = lons[column];
+                    // pixels is a list of the pixels in the tile whose
+                    // presence in the polygon  is *different* from the
+                    // pixel above.  (The 0th entry represents simply
+                    // whether the top pixel is in the polygon.)
+                    // FIXME: could be typed array
+                    var pixels = new Array(height);
+                    for (var y = 0; y < height; ++y) {
+                        pixels[y] = false;
+                    }
+
+                    for (var pt1Idx = 0; pt1Idx < pointList.length; ++pt1Idx) {
+                        var pt2Idx = pt1Idx + 1;
+                        if (pt2Idx == pointList.length) {
+                            pt2Idx = 0;
+                        }
+
+                        var lon1 = pointList[pt1Idx][0];
+                        var lon2 = pointList[pt2Idx][0];
+                        var flip = Math.abs(lon2 - lon1) > 180;
+                        if (((lon1 < lon) == (lon2 < lon)) != flip) {
+                            // This segment does not affect this column.
+                            // NOTE: This means that we return here for any
+                            // purely vertical segment (lon1 == lon2).
+                            // NOTE: The fact that both tests above are <
+                            // means that we correctly handle the case of
+                            // horizontal segments that start or end
+                            // exactly at this column.  This is
+                            // particularly important when two such
+                            // segments are joined by a vertical that runs
+                            // exactly along this column.  In particular,
+                            // a line along this column gets colored if
+                            // the inside of the polygon is to the right,
+                            // since values equal to lon are treated the
+                            // same as those greater.
+                            continue;
+                        }
+
+                        var lat1 = pointList[pt1Idx][1];
+                        var lat2 = pointList[pt2Idx][1];
+
+                        var portion;
+                        if (flip) {
+                            var llon = (lon + 540) % 360;
+                            lon1 = (lon1 + 540) % 360;
+                            lon2 = (lon2 + 540) % 360;
+                            portion = (llon - lon1) / (lon2 - lon1);
+                        } else {
+                            portion = (lon - lon1) / (lon2 - lon1);
+                        }
+
+                        var intercept = (1 - portion) * lat1 + portion * lat2;
+
+                        if (!(lats[height-1] < intercept)) { // see below for <
+                            continue;
+                        }
+                        if (lats[0] < intercept) { // see below for <
+                            pixels[0] = !pixels[0];
+                            continue;
+                        }
+
+                        // Binary search
+
+                        // Both inclusive.  Already checked y==0 above.
+                        // Note that lats are *reverse-sorted*, so min
+                        // is for largest-latitude and max is lowest.
+                        var min = 1, max = height - 1;
+
+                        while (min != max) {
+                            // Make a line exactly hitting the intercept
+                            // color the pixel if the inside of the polygon
+                            // is below by treating equal-to-intercept and
+                            // greater-than-intercept the same (remember
+                            // positive is up).
+                            var y = min + Math.floor((max - min) / 2);
+                            if (lats[y] < intercept) {
+                                max = y;
+                            } else {
+                                min = y + 1;
+                            }
+                        }
+                        pixels[min] = !pixels[min];
+                    }
+
+                    // Now actually fill in the pixels.
+                    var drawing = false;
+                    var rectTop = 0;
+                    for (var y = 0; y < height; ++y) {
+                        if (pixels[y]) {
+                            if (drawing) {
+                                cx.fillRect(column, rectTop, 1, y - rectTop);
+                            } else {
+                                rectTop = y;
+                            }
+                            drawing = !drawing;
+                        }
+                    }
+                    if (drawing) {
+                        cx.fillRect(column, rectTop, 1, height - rectTop);
+                    }
+                }
+            }
+        }
+        return canvas;
+    }
+
     // Exports:
     window.tzmap = {
         /**
@@ -391,5 +511,31 @@
          * same), and each point is an array of [lon, lat] as floats.
          */
         polygonsFor: public_polygonsFor,
+
+        /**
+         * tileFor(lats, lons, polygons)
+         *
+         * Return an HTML canvas element (created off the window's
+         * document) that contains the given set of polygons drawn to
+         * it.
+         *
+         * FIXME: want to do whole vertical row of tiles at once!
+         *
+         * Note that this API means that the tiles must be based on a
+         * map projection (like Mercator or Peters) where all vertical
+         * lines correspond to lines of longitude and all horizontal
+         * lines correspond to lines of latitude.  (This allows for
+         * significant optimization that makes the tile generation
+         * possible in a reasonable amount of time.)
+         *
+         * lats - array, must be sorted top to bottom
+         * lons - array, must be sorted right to left (wrap allowed)
+         * polygons - an array of objects, where each object in the
+         *   array is an object with two properties:
+         *     color: a CSS Color (usable for the HTML canvas API)
+         *     polygons: a set of polygons such as that returned from
+         *       polygonsFor
+         */
+        tileFor: public_tileFor,
     };
 })();
