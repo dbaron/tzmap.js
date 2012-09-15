@@ -19,12 +19,18 @@ function run() {
         lats[i] = 50 - i / 20;
     }
 
+    do_tileFor(lats, lons, [{color: "red", polygons: polygons}]);
+
+}
+
+function do_tileFor(lats, lons, polygons) {
     var startTime = Date.now();
-    var canvas = window.tzmap.tileFor(lats, lons, [{color: "red", polygons: polygons}]);
+    var canvas = window.tzmap.tileFor(lats, lons, polygons);
     var duration = Date.now() - startTime;
     canvas.style.border = "1px solid black";
     document.body.appendChild(canvas);
-    document.body.appendChild(document.createTextNode(" drawn in " + duration + "ms."));
+    document.body.appendChild(
+        document.createTextNode(" drawn in " + duration + "ms."));
     document.body.appendChild(document.createElement("br"));
 }
 </script>
