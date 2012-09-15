@@ -8,19 +8,43 @@ canvas { vertical-align: middle }
 <script>
 window.tzmap.loadData("./", run, function() { alert("loading failed") });
 
+function range(count, start, interval) {
+    var l = [];
+    for (var i = 0; i < count; ++i) {
+        l[i] = i * interval + start;
+    }
+    return l;
+}
+
 function run() {
-    var polygons = window.tzmap.polygonsFor(["America/Los_Angeles"]);
-    var lons = [];
-    for (var i = 0; i < 300; ++i) {
-        lons[i] = i / 25 - 125;
-    }
-    var lats = [];
-    for (i = 0; i < 400; ++i) {
-        lats[i] = 50 - i / 20;
-    }
 
-    do_tileFor(lats, lons, [{color: "red", polygons: polygons}]);
+    do_tileFor(range(400, 50, -0.05), range(300, -125, 0.04),
+               [{color: "red",
+                 polygons: window.tzmap.polygonsFor(["America/Los_Angeles"])}]);
 
+    var interesting_polygon_set = [
+        { color: "red",
+          polygons: window.tzmap.polygonsFor(["America/Los_Angeles"]) },
+        { color: "blue",
+          polygons: window.tzmap.polygonsFor(["America/Denver",
+                                              "America/Boise",
+                                              "America/Phoenix"]) },
+        { color: "green",
+          polygons: window.tzmap.polygonsFor(["America/New_York",
+                                              "America/Toronto",
+                                              "America/Indianapolis"]) },
+        { color: "red",
+          polygons: window.tzmap.polygonsFor(["Europe/Paris",
+                                              "Europe/Oslo",
+                                              "Europe/Copenhagen",
+                                              "Europe/Madrid"]) },
+    ];
+
+    do_tileFor(range(360, 90, -0.5), range(720, -180, 0.5),
+               interesting_polygon_set);
+
+    do_tileFor(range(500, 43, -0.01), range(500, -77, 0.01),
+               interesting_polygon_set);
 }
 
 function do_tileFor(lats, lons, polygons) {
