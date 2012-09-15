@@ -343,13 +343,21 @@
     var public_tileFor = function(lats, lons, polygonsArray) {
         var height = lats.length;
         var width = lons.length;
+        var colorCanvas = document.createElement("canvas");
+        colorCanvas.height = 1;
+        colorCanvas.width = 1;
+        var colorcx = colorCanvas.getContext("2d");
         var canvas = document.createElement("canvas");
         canvas.height = height;
         canvas.width = width;
         var cx = canvas.getContext("2d");
+        var id = cx.createImageData(width, height);
         for (var polygonsIdx in polygonsArray) {
             var polygonsObj = polygonsArray[polygonsIdx];
-            cx.fillStyle = polygonsObj.color;
+            colorcx.fillStyle = polygonsObj.color;
+            colorcx.clearRect(0, 0, 1, 1);
+            colorcx.fillRect(0, 0, 1, 1);
+            var colorArray = colorcx.getImageData(0, 0, 1, 1).data;
             for (var column = 0, column_end = width;
                  column < column_end; ++column) {
                 var lon = lons[column];
@@ -441,22 +449,17 @@
 
                 // Now actually fill in the pixels.
                 var drawing = false;
-                var rectTop = 0;
                 for (var y = 0; y < height; ++y) {
                     if (pixels[y]) {
-                        if (drawing) {
-                            cx.fillRect(column, rectTop, 1, y - rectTop);
-                        } else {
-                            rectTop = y;
-                        }
                         drawing = !drawing;
                     }
-                }
-                if (drawing) {
-                    cx.fillRect(column, rectTop, 1, height - rectTop);
+                    if (drawing) {
+                        id.data.set(colorArray, (y * width + column) * 4);
+                    }
                 }
             }
         }
+        cx.putImageData(id, 0, 0);
         return canvas;
     }
 
