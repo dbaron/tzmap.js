@@ -17,12 +17,14 @@ function range(count, start, interval) {
 }
 
 function run() {
-
     do_tileFor(range(400, 50, -0.05), range(300, -125, 0.04),
                [{color: "red",
                  polygons: window.tzmap.polygonsFor(["America/Los_Angeles"])}]);
+    setTimeout(run2, 0);
+}
 
-    var interesting_polygon_set = [
+function run2() {
+    window.interesting_polygon_set = [
         { color: "red",
           polygons: window.tzmap.polygonsFor(["America/Los_Angeles"]) },
         { color: "blue",
@@ -39,10 +41,16 @@ function run() {
                                               "Europe/Copenhagen",
                                               "Europe/Madrid"]) },
     ];
+    setTimeout(run3, 0);
+}
 
+function run3() {
     do_tileFor(range(360, 90, -0.5), range(720, -180, 0.5),
                interesting_polygon_set);
+    setTimeout(run4, 0);
+}
 
+function run4() {
     do_tileFor(range(500, 43, -0.01), range(500, -77, 0.01),
                interesting_polygon_set);
 }
