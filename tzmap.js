@@ -524,6 +524,9 @@
          *
          * FIXME: want to do whole vertical row of tiles at once!
          *
+         * FIXME: The performance of this function is not (yet)
+         * acceptable.
+         *
          * Note that this API means that the tiles must be based on a
          * map projection (like Mercator or Peters) where all vertical
          * lines correspond to lines of longitude and all horizontal
