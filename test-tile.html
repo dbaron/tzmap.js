@@ -53,6 +53,12 @@ function run3() {
 function run4() {
     do_tileFor(range(500, 43, -0.01), range(500, -77, 0.01),
                interesting_polygon_set);
+    setTimeout(run5, 0);
+}
+
+function run5() {
+    do_tileFor(range(700, 41, -0.001), range(500, -74.3, 0.0013),
+               interesting_polygon_set);
 }
 
 function do_tileFor(lats, lons, polygons) {
