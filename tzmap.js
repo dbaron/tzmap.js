@@ -93,7 +93,7 @@
             gXHR = new XMLHttpRequest();
             gXHR.onreadystatechange = rsc;
             gXHR.open("GET", path);
-            # FIXME: Generate binary data, and load it as ArrayBuffer.
+            // FIXME: Generate binary data, and load it as ArrayBuffer.
             if ("responseType" in gXHR) {
                 try {
                     gXHR.responseType = "json";
