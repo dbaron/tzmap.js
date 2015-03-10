@@ -64,6 +64,9 @@ for shapeRec in sf.shapeRecords():
         return shape.points[min:max]
     zonePolygons[tzid] = [ { "points": build_points(idx) } for idx in range(npolygons)]
 
+# Uncomment to test with just four timezones:
+#zonePolygons = { tz:zonePolygons[tz] for tz in zonePolygons if tz[0:9] == "America/L" }
+
 sf = None
 shutil.rmtree(tmpdir)
 
@@ -128,6 +131,7 @@ def find_segment(a, b):
 # is part of a zone boundary, which zone or pair of zones uses that
 # segment as part of its boundary.
 for (tz, polygons) in zonePolygons.iteritems():
+    sys.stderr.write("Building segments for {0}.\n".format(tz))
     for polygonidx in range(len(polygons)):
         polygon = polygons[polygonidx]
         lls = [LonLat(pt[0], pt[1]) for pt in polygon["points"]]
@@ -166,6 +170,7 @@ def segments_in_sequence(segdataa, segdatab):
          return True
     return False
 for (tz, polygons) in zonePolygons.iteritems():
+    sys.stderr.write("Writing segments for {0}.\n".format(tz))
     for polygonidx in range(len(polygons)):
         polygon = polygons[polygonidx]
         segs = polygon["segs"]
