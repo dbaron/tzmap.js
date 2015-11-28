@@ -81,6 +81,7 @@ class LonLat:
     def __init__(self, lon, lat):
         self.lon = lon
         self.lat = lat
+    # FIXME: __cmp__ no longer exists in python 3
     def __cmp__(self, other):
         result = cmp(self.lon, other.lon)
         if result != 0:
@@ -100,6 +101,7 @@ class Segment:
         assert a < b
         self.a = a
         self.b = b
+    # FIXME: __cmp__ no longer exists in python 3
     def __cmp__(self, other):
         result = cmp(self.a, other.a)
         if result != 0:
