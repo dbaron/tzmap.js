@@ -130,7 +130,7 @@ def find_segment(a, b):
 # Build up the segment data, which tells us for each line segment that
 # is part of a zone boundary, which zone or pair of zones uses that
 # segment as part of its boundary.
-for (tz, polygons) in zonePolygons.iteritems():
+for (tz, polygons) in zonePolygons.items():
     sys.stderr.write("Building segments for {0}.\n".format(tz))
     for polygonidx in range(len(polygons)):
         polygon = polygons[polygonidx]
@@ -169,7 +169,7 @@ def segments_in_sequence(segdataa, segdatab):
        refs_in_sequence(segdataa.revRef, segdatab.fwdRef):
          return True
     return False
-for (tz, polygons) in zonePolygons.iteritems():
+for (tz, polygons) in zonePolygons.items():
     sys.stderr.write("Writing segments for {0}.\n".format(tz))
     for polygonidx in range(len(polygons)):
         polygon = polygons[polygonidx]
@@ -210,7 +210,7 @@ for (tz, polygons) in zonePolygons.iteritems():
 json_data = {
               "chains": [[[point.lon, point.lat] for point in chain] for chain in chains],
               "zones": { tz: [polygon["chains"] for polygon in polygons]
-                         for (tz, polygons) in zonePolygons.iteritems() }
+                         for (tz, polygons) in zonePolygons.items() }
             }
 
-print json.dumps(json_data, sort_keys=True)
+print(json.dumps(json_data, sort_keys=True))
