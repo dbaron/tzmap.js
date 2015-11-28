@@ -1,10 +1,9 @@
-This is a copy of the Python Shapefile Library, version 1.0 (python 2
-version).
+This is a copy of the Python Shapefile Library, version 1.2.3
 
-It was imported from the subversion repository at
-http://pyshp.googlecode.com/svn/tags/Release-1.0/Python2 , revision 25.
+It was imported from the repository at
+https://github.com/GeospatialPython/pyshp
 
-As described in http://code.google.com/p/pyshp/ it is released under the
-MIT license.
+As described in the LICENSE.txt included (included here as COPYING) it is
+released under the MIT license.
 
-For more information, see http://code.google.com/p/pyshp/ .
+For more information, see https://github.com/GeospatialPython/pyshp

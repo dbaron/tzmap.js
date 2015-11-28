@@ -1,32 +1,60 @@
-"""
-
-Python Shapefile Library
+PyShp
 ========================
-:Author: Joel Lawhead <jlawhead@geospatialpython.com>
-:Revised: January 31, 2011
+
+:Author: Joel Lawhead - jlawhead@geospatialpython.com
+
+:Version 1.2.2
+
+:Revised: January 9, 2015
+
+.. contents::
 
 Overview
 --------
 
-The Python Shapefile Library (PSL) provides read and write support for the ESRI
+PyShp provides read and write support for the Esri
 Shapefile format. The Shapefile format is a popular Geographic Information
-System vector data format.
+System vector data format created by Esri.  For more information about this format 
+please read the well-written "ESRI Shapefile Technical Description - July 1998"
+located at http://www.esri.com/library/whitepapers/pdfs/shapefile.pdf.  
+The Esri document describes the shp and shx file formats.  However a third file
+format called dbf is also required.  This format is documented on the web as the
+"XBase File Format Description" and is a simple file-based database format created
+in the 1960's.  For more on this specification see: 
+http://www.clicketyclick.dk/databases/xbase/format/index.html   
 
-This documentation covers the Python 2.x-compatible version of the library.  A
-Python 3-compatible version is available in the Subversion trunk of the pyshp 
-project on Google Code.
+Both the Esri and XBase file-formats are very simple in design and
+memory efficient which is part of the reason the shapefile format remains popular
+despite the numerous ways to store and exchange GIS data available today. 
 
-This document provides usage examples for using the Python Shapefile Library.
+Pyshp is compatible with Python 2.4-3.x.
+
+This document provides examples for using PyShp to read and write shapefiles.  
+
+Currently the sample census blockgroup shapefile referenced in the examples is
+only available on the google code project site at http://code.google.com/p/pyshp.
+These examples are straight-forward and you can also easily run them against your 
+own shapefiles manually with minimal modification. Other examples for specific 
+topics are continually added to the pyshp wiki on google code and the blog
+http://GeospatialPython.com.
+
+Important: For information about map projections, shapefiles,
+and Python please visit: http://code.google.com/p/pyshp/wiki/MapProjections
+
+I sincerely hope this library eliminates the mundane distraction of simply 
+reading and writing data, and allows you to focus on the challenging and FUN
+part of your geospatial project. 
 
 Examples
 --------
 
-Before doing anything you must import PSL.
+Before doing anything you must import the library.
 
 >>> import shapefile
 
 The examples below will use a shapefile created from the U.S. Census Bureau
-Blockgroups data set near San Francisco, CA.
+Blockgroups data set near San Francisco, CA and available in the subversion 
+repository of the pyshp google code site.
 
 Reading Shapefiles
 ++++++++++++++++++
@@ -49,7 +77,25 @@ OR
 >>> sf = shapefile.Reader("shapefiles/blockgroups.dbf")
 
 
-OR any of the other 5+ formats which are potentially part of a shapefile.
+OR any of the other 5+ formats which are potentially part of a shapefile. 
+The library does not care about extensions.
+
+Reading Shapefiles from File-Like Objects
+.........................................
+
+You can also load shapefiles from any Python file-like object using keyword
+arguments to specify any of the three files.  This feature is very powerful
+and allows you to load shapefiles from a url, from a zip file, serialized
+object, or in some cases a database.
+
+>>> myshp = open("shapefiles/blockgroups.shp", "rb")
+>>> mydbf = open("shapefiles/blockgroups.dbf", "rb")
+>>> r = shapefile.Reader(shp=myshp, dbf=mydbf)
+
+Notice in the examples above the shx file is never used.  The shx file is a 
+very simple fixed-record index for the variable length records in the shp file.
+This file is optional for reading.  If it's available pyshp will use the shx file
+to access shape records a little faster but will do just fine without it.
 
 Reading Geometry
 ................
@@ -70,10 +116,20 @@ geometry of each shape record.
 >>> len(shapes)
 663
 
+You can iterate through the shapefile's geometry using the iterShapes() method.
+
+>>> len(list(sf.iterShapes()))
+663
+
 Each shape record contains the following attributes:
 
->>> dir(shapes[3])
-['__doc__', '__init__', '__module__', 'bbox', 'parts', 'points', 'shapeType']
+>>> for name in dir(shapes[3]):
+...     if not name.startswith('__'):
+...         name
+'bbox'
+'parts'
+'points'
+'shapeType'
 
  - shapeType: an integer representing the type of shape as defined by the
    shapefile specification.
@@ -82,12 +138,15 @@ Each shape record contains the following attributes:
 5
 
  - bbox: If the shape type contains multiple points this tuple describes the 
-   upper left (x,y) coordinate and lower right corner coordinate creating a 
+   lower left (x,y) coordinate and upper right corner coordinate creating a 
    complete box around the points. If the shapeType is a Null 
    (shapeType == 0) then an AttributeError is raised.
  
->>> shapes[3].bbox
-[-122.485792, 37.786931000000003, -122.446285, 37.811019000000002]
+>>> # Get the bounding box of the 4th shape.
+>>> # Round coordinates to 3 decimal places
+>>> bbox = shapes[3].bbox 
+>>> ['%.3f' % coord for coord in bbox]
+['-122.486', '37.787', '-122.446', '37.811']
  
  - parts: Parts simply group collections of points into shapes. If the shape record 
    has multiple parts this attribute contains the index of the first point of each part. 
@@ -101,8 +160,11 @@ Each shape record contains the following attributes:
  
 >>> len(shapes[3].points)
 173
->>> shapes[3].points[7]
-[-122.471063, 37.787402999999998]
+>>> # Get the 8th point of the fourth shape
+>>> # Truncate coordinates to 3 decimal places
+>>> shape = shapes[3].points[7]
+>>> ['%.3f' % coord for coord in shape]
+['-122.471', '37.787']
 
 To read a single shape by calling its index use the shape() method. The index
 is the shape's count from 0. So to read the 8th shape record you would
@@ -110,8 +172,10 @@ use its index which is 7.
 
 >>> s = sf.shape(7)
 
->>> s.bbox
-[-122.449637, 37.801490000000001, -122.442109, 37.807957999999999]
+>>> # Read the bbox of the 8th shape to verify 
+>>> # Round coordinates to 3 decimal places
+>>> ['%.3f' % coord for coord in s.bbox]
+['-122.450', '37.801', '-122.442', '37.808']
 
 Reading Records
 ................
@@ -164,6 +228,12 @@ You can get a list of the shapefile's records by calling the records() method:
 >>> records = sf.records()
 
 >>> len(records)
+663
+
+Similar to the geometry methods, you can iterate through dbf records using the 
+recordsIter() method.
+
+>>> len(list(sf.iterRecords()))
 663
 
 Each record is a list containing an attribute corresponding to each field in the
@@ -223,14 +293,20 @@ The blockgroup key and population count:
 >>> len(points)
 2
 
+There is also an iterShapeRecords() method to iterate through large files:
+
+>>> shapeRecs = sf.iterShapeRecords()
+>>> for shape, rec in shapeRecs:
+...     # do something here
+
 Writing Shapefiles
 ++++++++++++++++++
 
-The PSL tries to be as flexible as possible when writing shapefiles while 
+PyShp tries to be as flexible as possible when writing shapefiles while 
 maintaining some degree of automatic validation to make sure you don't 
 accidentally write an invalid file.
 
-The PSL can write just one of the component files such as the shp or dbf file
+PyShp can write just one of the component files such as the shp or dbf file
 without writing the others. So in addition to being a complete 
 shapefile library, it can also be used as a basic dbf (xbase) library. Dbf files are
 a common database format which are often useful as a standalone simple 
@@ -259,6 +335,22 @@ shapefile specification. It is important to note that numbering system has
 several reserved numbers which have not been used yet therefore the numbers of 
 the existing shape types are not sequential.
 
+You can reference shape types by the numbers or by constants defined by PyShp:
+shapefile.NULL = 0
+shapefile.POINT = 1
+shapefile.POLYLINE = 3
+shapefile.POLYGON = 5
+shapefile.MULTIPOINT = 8
+shapefile.POINTZ = 11
+shapefile.POLYLINEZ = 13
+shapefile.POLYGONZ = 15
+shapefile.MULTIPOINTZ = 18
+shapefile.POINTM = 21
+shapefile.POLYLINEM = 23
+shapefile.POLYGONM = 25
+shapefile.MULTIPOINTM = 28
+shapefile.MULTIPATCH = 31
+
 There are three ways to set the shape type: 
 - Set it when creating the class instance.
 - Set it by assigning a value to an existing class instance.
@@ -268,10 +360,16 @@ To manually set the shape type for a Writer object when creating the Writer:
 
 >>> w = shapefile.Writer(shapeType=1)
 
+or we can use the constants as explained above:
+
+>>> w = shapefile.Writer(shapefile.POINT)
+
+As you can see, specifying the shapeType argument explicitly isn't necessary.
+
 >>> w.shapeType
 1
 
-OR you can set it after the Writer is created:
+OR you can set it after the Writer is created by changing the property:
 
 >>> w.shapeType = 3
 
@@ -283,7 +381,7 @@ Geometry and Record Balancing
 
 Because every shape must have a corresponding record it is critical that the
 number of records equals the number of shapes to create a valid shapefile. To
-help prevent accidental misalignment the PSL has an "auto balance" feature to
+help prevent accidental misalignment PyShp has an "auto balance" feature to
 make sure when you add either a shape or a record the two sides of the 
 equation line up. This feature is NOT turned on by default. To activate it
 set the attribute autoBalance to 1 (True):
@@ -333,7 +431,7 @@ The writer object's shapes list will now have one null shape:
 Point shapes are added using the "point" method. A point is specified by an 
 x, y, and optional z (elevation) and m (measure) value.
 
->>> w = shapefile.Writer()
+>>> w = shapefile.Writer(shapefile.POINT)
 
 >>> w.point(122, 37) # No elevation or measure values
 
@@ -345,20 +443,65 @@ x, y, and optional z (elevation) and m (measure) value.
 >>> w.shapes()[1].points
 [[118, 36, 4, 8]]
 
-**Adding a Poly shape**
+**Adding a Poly Shape**
 
 "Poly" shapes can be either polygons or lines.  Shapefile polygons must have at
-least 5 points and the last point must be the same as the first (i.e. you can't
-have a triangle accoring to the shapefile specification even though many popular
-GIS programs support such shapefiles.) A line must have at least two points.
+least 4 points and the last point must be the same as the first. PyShp automatically
+enforces closed polygons.
+A line must have at least two points.
 Because of the similarities between these two shape types they are created using
 a single method called "poly".
 
->>> w = shapefile.Writer()
+>>> w = shapefile.Writer(shapefile.POLYGON)
 
 >>> w.poly(shapeType=3, parts=[[[122,37,4,9], [117,36,3,4]], [[115,32,8,8], 
 ... [118,20,6,4], [113,24]]])
 
+**Adding a Polygon with Rings**
+
+Polygons consist of rings which mean they are closed.  The first point and last point 
+of a ring must be the same. PyShp enforces ring closure if the ring is incomplete when
+you add the shape.  Polygons can have inner rings which create holes.  Holes are defined 
+by the order of the points.  Normally points in a ring run clockwise.  If the points
+run counter-clockwise then they form a hole.  If you don't order the points correctly
+you'll just have overlapping polygons.
+
+>>> w = shapefile.Writer(shapefile.POLYGON)
+>>> outer_ring = [[10,10],[50,50],[100,10],[50,-50],[10,10]]
+>>> inner_ring = [[40,10],[50,30],[70,10],[50,-30],[40,10]]
+>>> inner_ring.reverse()
+
+You can use the "shapefile.signed_area()" method to determine if a ring is clockwise
+or counter-clockwise.  A value >= 0 means the ring is counter-clockwise and < 0 means
+the ring is clockwise.  The value returned is also the area of the polygon.
+
+>>> # Clockwise ring
+... shapefile.signed_area(outer_ring)
+-4500.0
+>>> # Counter-clockwise ring
+... shapefile.signed_area(inner_ring)
+900.0
+
+**Creating 3D Polygons**
+
+Elevation values, known as "Z" values allow you to create 3-dimensional shapefiles. The 
+z value is an extra value specified as part of a point.
+
+>>> w = shapefile.Writer(shapeType=shapefile.POLYGONZ)
+>>> w.poly([[[-89.0, 33, 12], [-90, 31, 11], [-91, 30, 12]]], shapeType=15)
+>>> w.field("NAME")
+>>> w.record("PolyZTest")
+>>> w.save("shapefiles/test/MyPolyZ")
+
+The z values are stored in a seperate shape attribute.
+
+>>> r = shapefile.Reader("shapefiles/test/MyPolyZ")
+>>> s = r.shape(0)
+>>> s.points
+[[-89.0, 33.0], [-90.0, 31.0], [-91.0, 30.0], [-89.0, 33.0]]
+>>> s.z
+[12.0, 11.0, 12.0, 12.0]
+ 
 Creating Attributes
 ...................
 
@@ -406,18 +549,70 @@ You can also add attributes using keyword arguments where the keys are field nam
 >>> w.record(FIRST_FLD='First', SECOND_FLD='Line')
 >>> w.save('shapefiles/test/line')
 
-Editor Class
-+++++++++++++
+File Names
+..........
+
+File extensions are optional when reading or writing shapfiles.  If you specify them Pyshp
+ignores them anyway. When you save files you can specify a base file name that is used for
+all three file types.  Or you can specify a nmae for one or more file types.  In that case,
+any file types not assigned will not save and only file types with file names will be saved.
+If you do not specify any file names (i.e. save()), then a unique file name is generated with
+the prefix "shapefile\_" followed by random characters which is used for all three files.  The 
+unique file name is returned as a string.
+
+>>> targetName = w.save()
+>>> assert("shapefile_" in targetName)
+
+Saving to File-Like Objects
+...........................
+
+Just as you can read shapefiles from python file-like objects you can also write them.
+
+>>> try:
+...     from StringIO import StringIO
+... except ImportError:
+...     from io import BytesIO as StringIO
+>>> shp = StringIO()
+>>> shx = StringIO()
+>>> dbf = StringIO()
+>>> w.saveShp(shp)
+>>> w.saveShx(shx)
+>>> w.saveDbf(dbf)
+>>> # Normally you would call the "StringIO.getvalue()" method on these objects.
+>>> shp = shx = dbf = None
+
+Editing Shapefiles
+++++++++++++++++++
 
 The Editor class attempts to make changing existing shapefiles easier by handling the reading and writing details behind the scenes.
 
 Let's add shapes to existing shapefiles:
 
-Add a point to a point shapefile:
+Add a point to a point shapefile
  
 >>> e = shapefile.Editor(shapefile="shapefiles/test/point.shp")
 >>> e.point(0,0,10,2)
 >>> e.record("Appended","Point")
+>>> # We added z and m values so
+>>> # change the shapetype
+>>> e.shapeType = shapefile.POINTZ
+>>> e.save('shapefiles/test/point')
+
+Edit the appended point to change the "y" and "z" value
+
+>>> e = shapefile.Editor(shapefile="shapefiles/test/point.shp")
+>>>	# Find the point by the attribute
+>>> for s in enumerate(e.records):
+...     i, record = s
+...     if record[0] == "Appended":
+...         geom = e._shapes[i]
+...         # Change the y value to 5
+...         geom.points[0][1] = 5
+...         # Change the z value to 9
+...         if hasattr(geom, "z"):
+...	            geom.z = (9,)
+...         else:
+...             geom.points[0][2] = 9
 >>> e.save('shapefiles/test/point')
 
 Add a new line to a line shapefile:
@@ -426,6 +621,7 @@ Add a new line to a line shapefile:
 >>> e.line(parts=[[[10,5],[15,5],[15,1],[13,3],[11,1]]])
 >>> e.record('Appended','Line')
 >>> e.save('shapefiles/test/line')
+>>> e = None
 
 Add a new polygon to a polygon shapefile:
 
@@ -433,6 +629,7 @@ Add a new polygon to a polygon shapefile:
 >>> e.poly(parts=[[[5.1,5],[9.9,5],[9.9,1],[7.5,3],[5.1,1]]])
 >>> e.record("Appended","Polygon")
 >>> e.save('shapefiles/test/polygon')
+>>> e = None
 
 Remove the first point in each shapefile - for a point shapefile that is 
 the first shape and record"
@@ -440,13 +637,25 @@ the first shape and record"
 >>> e = shapefile.Editor(shapefile="shapefiles/test/point.shp")
 >>> e.delete(0)
 >>> e.save('shapefiles/test/point')
+>>> e = None
 
 Remove the last shape in the polygon shapefile.
 
 >>> e = shapefile.Editor(shapefile="shapefiles/test/polygon.shp")
 >>> e.delete(-1)
 >>> e.save('shapefiles/test/polygon')
-"""
+>>> e = None
 
+Python __geo_interface__
+++++++++++++++++++++++++
 
+The Python __geo_interface__ convention provides a data interchange interface
+among geospatial Python libraries.  The interface returns data as GeoJSON.
+More information on the __geo_interface__ protocol can be found at:
+https://gist.github.com/sgillies/2217756.
+More information on GeoJSON is available at http://geojson.org.
+ 
+>>> s = sf.shape(0)
+>>> s.__geo_interface__["type"]
+'MultiPolygon'
 
