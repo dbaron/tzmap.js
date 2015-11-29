@@ -151,8 +151,6 @@
 
     function zoneContains(tzid, lat, lon) {
         var zones = gJSON.zones;
-        // FIXME: Need to fix for new format!
-        var chains = gJSON.chains;
 
         var zone = zones[tzid];
         for (var polygonIdx in zone) {
@@ -168,15 +166,22 @@
             var intersects = 0;
             for (var chainIdx in polygon) {
                 var chainobj = polygon[chainIdx];
-                var chainID = chainobj[0];
-                var chainInv = chainobj[1];
-                var chain = chains[chainID];
+                var start = chainobj[0];
+                var end = chainobj[1];
+                var increment;
+                if (end > start) {
+                    --end;
+                    increment = 1;
+                } else {
+                    --start;
+                    increment = -1;
+                }
                 var prevlon, prevlat;
-                for (var pointIdx in chain) {
-                    var pointobj = chain[pointIdx];
+                for (var pointIdx = start; (pointIdx - increment) != end; pointIdx += increment) {
+                    var pointobj = pointat(pointIdx);
                     var ptlon = pointobj[0];
                     var ptlat = pointobj[1];
-                    if (pointIdx > 0) {
+                    if (pointIdx != start) {
                         if (ptlon == prevlon) {
                             // vertical line.  All we need to do is
                             // check if our point is *on* it.
