@@ -151,6 +151,7 @@
 
     function zoneContains(tzid, lat, lon) {
         var zones = gJSON.zones;
+        // FIXME: Need to fix for new format!
         var chains = gJSON.chains;
 
         var zone = zones[tzid];
