@@ -504,6 +504,19 @@
         return canvas;
     }
 
+    var gAllZones = null;
+    var public_allZones = function() {
+        if (!gAllZones) {
+            var zones = [];
+            for (var zone in gJSON.zones) {
+                zones.push(zone);
+            }
+            zones.sort();
+            gAllZones = zones;
+        }
+        return gAllZones;
+    }
+
     // Exports:
     window.tzmap = {
         /**
@@ -584,5 +597,19 @@
          *       polygonsFor
          */
         tileFor: public_tileFor,
+
+        /**
+         * Return an array listing all supported named time zones, in
+         * alphabetical order.  The same array will be returned from
+         * each call.
+         *
+         * Note that some of these zone names are aliases in the tz
+         * database rather than canonical zones.  if you have a newer tz
+         * database than tzmap database.
+         *
+         * This list also includes the name "uninhabited", which is not
+         * in the tz database.
+         */
+        allZones: public_allZones,
     };
 })();
