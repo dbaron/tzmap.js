@@ -87,6 +87,11 @@ shutil.rmtree(tmpdir)
 # points.  We define that by saying the "first" pair in the segment is
 # the one where the longitude is smaller; if the longitudes are equal
 # then it is the one where the latitude is smaller.
+# FIXME: This approach doesn't work when one segment is a subsegment of
+# another.  This is most obvious on the Egypt-Libya border, where
+# merging the polygons for Egypt and Libya (which are often in the same
+# UTC offset) yields a polygon with a large zero-width indentation
+# running most of the length of their border.
 
 class LonLat:
     def __init__(self, lon, lat):
