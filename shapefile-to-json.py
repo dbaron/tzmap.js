@@ -19,6 +19,9 @@ import zipfile
 import tempfile
 import shutil
 import json
+import struct
+
+from optparse import OptionParser
 
 BASEDIR = os.path.dirname(os.path.realpath(__file__))
 SHAPEFILE_ZIP = os.path.join(os.path.dirname(BASEDIR),
@@ -27,6 +30,14 @@ SHAPEFILE_ZIP = os.path.join(os.path.dirname(BASEDIR),
 
 sys.path.append(os.path.join(BASEDIR, "pyshp"))
 import shapefile
+
+op = OptionParser()
+(options, args) = op.parse_args()
+
+if len(args) != 2:
+    op.error("expected two arguments but got {0}".format(len(args)))
+jsonFilename = args[0]
+dataFilename = args[1]
 
 # The shapefile code requires files as input rather than file-like
 # objects (easily fixable) and it also requires that they be seekable,
@@ -157,6 +168,8 @@ for (tz, polygons) in zonePolygons.items():
 # that separate the same pair of time zones.  (I'd have called them
 # sequences, but then I'd have to distinguish "seg" and "seq".)
 chains = []
+dataIO = open(dataFilename, "w")
+dataIndex = 0
 def refs_in_sequence(refa, refb):
     if refa is None or refb is None:
         return refa is None and refb is None
@@ -190,29 +203,45 @@ for (tz, polygons) in zonePolygons.items():
                        (segdata.chain is None) == (currentChainData is not None):
                         continueChain = True
                 if continueChain:
+                    currentChainData[1] = currentChainData[1] + 1
+                    dataIndex = dataIndex + 1
+                    assert dataIndex == currentChainData[1]
                     if is_reversed:
-                        currentChainData.append(seg.a)
+                        dataIO.write(struct.pack("<2d", seg.a.lon, seg.a.lat))
                     else:
-                        currentChainData.append(seg.b)
+                        dataIO.write(struct.pack("<2d", seg.b.lon, seg.b.lat))
                 else:
                     currentChainID = len(chains)
+                    startIndex = dataIndex
+                    dataIndex = dataIndex + 2
+                    endIndex = dataIndex
+                    [p0, p1] = [None, None]
                     if is_reversed:
-                        currentChainData = [ seg.b, seg.a ]
+                        [p0, p1] = [ seg.b, seg.a ]
                     else:
-                        currentChainData = [ seg.a, seg.b ]
+                        [p0, p1] = [ seg.a, seg.b ]
+                    dataIO.write(struct.pack("<4d", p0.lon, p0.lat, p1.lon, p1.lat))
+                    currentChainData = [startIndex, endIndex]
                     chains.append(currentChainData)
-                    polygonChains.append([currentChainID, False])
+                    polygonChains.append(currentChainData)
                 segdata.chain = currentChainID
             else:
                 if currentChainID != segdata.chain:
                     currentChainID = segdata.chain
-                    polygonChains.append([currentChainID, True])
+                    # Write the higher index first to indicate that this
+                    # chain is read in reverse.
+                    [endIndex, startIndex] = chains[currentChainID]
+                    polygonChains.append([startIndex, endIndex])
                     currentChainData = None
+dataIO.close()
+dataIO = None
 
 json_data = {
-              "chains": [[[point.lon, point.lat] for point in chain] for chain in chains],
               "zones": { tz: [polygon["chains"] for polygon in polygons]
                          for (tz, polygons) in zonePolygons.items() }
             }
 
-print(json.dumps(json_data, sort_keys=True))
+jsonIO = open(jsonFilename, "w")
+json.dump(json_data, jsonIO, sort_keys=True)
+jsonIO.close()
+jsonIO = None

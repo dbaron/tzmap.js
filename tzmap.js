@@ -16,12 +16,14 @@
     "use strict";
 
     var gXHR = null;
+    var gDataXHR = null;
     var gLoadSuccessCallbacks = [];
     var gLoadErrorCallbacks = [];
     var gJSON = null;
+    var gData = null;
 
     var public_loadData = function(path, success_callback, error_callback) {
-        if (gJSON) {
+        if (gJSON && jData) {
             if (success_callback) {
                 setTimeout(success_callback, 0);
             }
@@ -46,9 +48,11 @@
             isHTTP = window.location.protocol == "http:" ||
                      window.location.protocol == "https:";
         }
-        path += "world-map.json";
+        var json_path = path + "world-map.json";
+        var data_path = path + "world-map.data";
         if (isHTTP) {
-            path += ".gz";
+            json_path += ".gz";
+            data_path += ".gz";
         }
 
         function do_notify(success) {
@@ -64,7 +68,7 @@
             }
         }
 
-        function rsc() {
+        function json_rsc() {
             if (gXHR.readyState != 4) {
                 return;
             }
@@ -80,20 +84,40 @@
                     }
                 } catch (ex) {
                 }
-                if (json && json.chains && json.zones) {
+                if (json && json.zones) {
                     success = true;
                     gJSON = json;
                 }
             }
 
-            do_notify(success);
+            if (!success || gData) {
+                do_notify(success);
+            }
+        }
+
+        function data_rsc() {
+            if (gDataXHR.readyState != 4) {
+                return;
+            }
+
+            var success = false;
+            if (!isHTTP || (200 <= gDataXHR.status && gDataXHR.status < 300)) {
+                if (gDataXHR.responseType == "arraybuffer") {
+                    var arraybuffer = gDataXHR.response;
+                    gData = new DataView(arraybuffer);
+                    success = true;
+                }
+            }
+
+            if (!success || gJSON) {
+                do_notify(success);
+            }
         }
 
         try {
             gXHR = new XMLHttpRequest();
-            gXHR.onreadystatechange = rsc;
-            gXHR.open("GET", path);
-            // FIXME: Generate binary data, and load it as ArrayBuffer.
+            gXHR.onreadystatechange = json_rsc;
+            gXHR.open("GET", json_path);
             if ("responseType" in gXHR) {
                 try {
                     gXHR.responseType = "json";
@@ -103,6 +127,12 @@
                 }
             }
             gXHR.send();
+
+            gDataXHR = new XMLHttpRequest();
+            gDataXHR.onreadystatechange = data_rsc;
+            gDataXHR.open("GET", data_path);
+            gDataXHR.responseType = "arraybuffer";
+            gDataXHR.send();
         } catch(ex) {
             do_notify(false);
         }
@@ -223,13 +253,10 @@
         return null;
     }
 
-    function firstpt(chainID) {
-        return gJSON.chains[chainID][0];
-    }
-
-    function lastpt(chainID) {
-        var chain = gJSON.chains[chainID];
-        return chain[chain.length - 1];
+    function pointat(index) {
+        var lon = gData.getFloat64(index * 16, true);
+        var lat = gData.getFloat64(index * 16 + 8, true);
+        return [lon, lat];
     }
 
     function pts_equal(a, b) {
@@ -237,10 +264,9 @@
     }
 
     var public_polygonsFor = function(zone_array) {
-        // A set of chain IDs, except there is a useful value on the
-        // value side of the hash:  whether the chain is used forwards
-        // (false) or in reverse (true).
-        var chains = {};
+        // A hash of chain start: end indices.  If the start is higher
+        // than the end, then the points are used in reverse.
+        var chains = [];
 
         for (var zoneIdx in zone_array) {
             var tzid = zone_array[zoneIdx];
@@ -249,13 +275,24 @@
                 var polygon = zone[polygonIdx];
                 for (var chainIdx in polygon) {
                     var chainobj = polygon[chainIdx];
-                    var chainID = chainobj[0];
-                    var reverse = chainobj[1];
-                    if (chainID in chains) {
-                        // It's a shared boundary
-                        delete chains[chainID];
+                    var start = chainobj[0];
+                    var end = chainobj[1];
+                    // Convert one-past-end index to last-item
+                    // index given start:end hashing.
+                    if (end > start) {
+                        --end;
                     } else {
-                        chains[chainID] = reverse;
+                        --start;
+                    }
+                    if (end in chains) {
+                        if (chains[end] != start) {
+                            console.log("unexpected chain data", start, end, chains[end]);
+                            return null;
+                        }
+                        // It's a shared boundary
+                        delete chains[end];
+                    } else {
+                        chains[start] = end;
                     }
                 }
             }
@@ -266,26 +303,33 @@
         // Append the polygons that are in one chain, and put the rest
         // of the chains in a hash by their starting longitude.
         var startlons = {};
-        for (var chainID in chains) {
-            if (pts_equal(firstpt(chainID), lastpt(chainID))) {
-                // This chain is a complete polygon.
-                var reverse = chains[chainID];
-                var chain = gJSON.chains[chainID];
-                if (chains[chainID]) {
-                    // append in reverse
-                    result.push([].concat(chain).reverse());
-                } else {
-                    // append in forward order (without copy)
-                    result.push(chain);
-                }
+        for (var chainStart in chains) {
+            var chainEnd = chains[chainStart];
+            var reverse;
+            if (chainStart > chainEnd) {
+                var tmp = chainStart;
+                chainStart = chainEnd;
+                chainEnd = tmp;
+                reverse = true;
             } else {
-                var reverse = chains[chainID];
-                var info = { chainID: chainID, reverse: reverse };
-                var startlon = (reverse ? lastpt : firstpt)(chainID)[0];
+                reverse = false;
+            }
+            var chain = [];
+            for (var i = chainStart; i <= chainEnd; ++i) {
+                chain.push(pointat(i));
+            }
+            if (reverse) {
+                chain.reverse();
+            }
+            if (pts_equal(chain[0], chain[chain.length - 1])) {
+                // This chain is a complete polygon.
+                result.push(chain);
+            } else {
+                var startlon = chain[0][0];
                 if (startlon in startlons) {
-                    startlons[startlon].push(info);
+                    startlons[startlon].push(chain);
                 } else {
-                    startlons[startlon] = [ info ];
+                    startlons[startlon] = [ chain ];
                 }
             }
         }
@@ -305,21 +349,21 @@
             }
             var polygon = [];
             do {
-                var arr, info;
+                var arr, chain;
                 if (polygon.length == 0) {
                     arr = startlons[startlon];
-                    info = arr.pop();
+                    chain = arr.pop();
                 } else {
                     var startpt = polygon[polygon.length - 1];
                     startlon = startpt[0];
                     arr = startlons[startlon];
-                    info = null;
+                    chain = null;
                     for (var idx in arr) {
-                        var testinfo = arr[idx];
-                        var testpt = (testinfo.reverse ? lastpt : firstpt)(testinfo.chainID);
+                        var testchain = arr[idx];
+                        var testpt = testchain[0];
                         if (testpt[1] == startpt[1]) {
                             arr.splice(idx, 1);
-                            info = testinfo;
+                            chain = testchain;
                             break;
                         }
                     }
@@ -327,12 +371,7 @@
                 if (arr.length == 0) {
                     delete startlons[startlon];
                 }
-                var chain = gJSON.chains[info.chainID];
-                if (info.reverse) {
-                    polygon = polygon.concat([].concat(chain).reverse());
-                } else {
-                    polygon = polygon.concat(chain);
-                }
+                polygon = polygon.concat(chain);
                 // Note: minimum of 2 iterations
             } while (!pts_equal(polygon[0], polygon[polygon.length - 1]));
             result.push(polygon);

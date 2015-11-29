@@ -11,11 +11,14 @@
 # along with this software.  If not, see
 # <http://creativecommons.org/publicdomain/zero/1.0/>.
 
-all: output/world-map.json output/world-map.json.gz output/tzmap.js output/test-tzmap.html output/test-tile.html
+all: output/world-map.json output/world-map.json.gz output/world-map.data output/world-map.data.gz output/tzmap.js output/test-tzmap.html output/test-tile.html
 
 output/world-map.json: shapefile-to-json.py ../tzmap/tz_world_mp.zip
 	mkdir -p output
-	./shapefile-to-json.py > $@
+	./shapefile-to-json.py output/world-map.json output/world-map.data
+
+# created by rule that creates world-map.json
+output/world-map.data: output/world-map.json
 
 %.gz: %
 	cat $< | gzip -9 > $@
