@@ -66,3 +66,7 @@ Build instructions:
    shapefile-to-json.py)
 
  * Run |make| to generate the output in output/
+
+Note that https://github.com/dbaron/timezone-map is a project that uses
+this library (and the one I wrote it for).  It's possible that some code
+in that repository might make sense being moved in this library.
